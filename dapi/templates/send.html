@@ -1,0 +1,11 @@
+<form action="{% url 'dapi:predict' %}" method="POST">
+  {% comment %} {% csrf_token %} {% endcomment %}
+  <input type="text" name="나이">나이
+  <input type="text" name="연간소득">연간소득
+  <input type="text" name="연차">경력
+  <input type="text" name="직업유형">직업유형
+  <input type="text" name="카드발급년수">카드
+  <input type="text" name="가족수">가족수
+
+  <input type="submit">
+</form>

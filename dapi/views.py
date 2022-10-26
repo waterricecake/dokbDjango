@@ -1,6 +1,7 @@
 
 # Create your views here.
-from django.http import JsonResponse
+import json
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -44,21 +45,21 @@ def certification(request):
         dataBytesIO = BytesIO(imgdata)
         image = Image.open(dataBytesIO)
         return cv2.cvtColor(np.array(image), cv2.IMREAD_COLOR)
-
-    src = request.POST["img"].split("base64,")[1]
+    jsonObject = json.loads(request.body)
+    src = jsonObject['img'].split("base64,")[1]
 
     image, face = face_detector(stringToRGB(src)) 
-
+    
     try: 
         #검출된 사진을 흑백으로 변환  
         face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY) 
         result = model.predict(face) 
         if result[1] < 500:  
             confidence = int(100*(1-(result[1])/300)) 
-        if confidence > 85:
-            return JsonResponse({"result":True}, safe=False)
+        if confidence > 75:
+            return JsonResponse(True, safe=False)
         else: 
-            return JsonResponse({"result":False}, safe=False)
+            return JsonResponse(False, safe=False)
         
     except: 
         #얼굴 검출 안됨  
@@ -70,19 +71,20 @@ def pred(request):
     import pickle
     import pandas as pd
 
-    # print("=============================")
-    # print(request.POST.get("age"))
-    # print("=============================")
+    jsonObject = json.loads(request.body)
+    print("=============================")
+    print(jsonObject.get('age'))
+    print("=============================")
 
     filePath2 = 'model.pkl'
     post_list = ['age', 'income', 'annual', 'job', 'issue', 'family']
     values = []
-
+    
     model = pickle.load(open(filePath2, 'rb'))
 
     for post in post_list:
-        values.append(float(request.POST.get(post)))
-
+        # values.append(float(request.POST.get(post)))
+        values.append(float(jsonObject.get(post)))
 
     power = (values[1]/((values[0]*365)+(values[2]*365)))/130
 
@@ -101,9 +103,11 @@ def pred(request):
     context={
         'result': grade
     }
-
+    context = json.dumps(context)
     return JsonResponse(context, safe=False)
-    # return render(request, 'result.html', context)
+    
+    # return HttpResponse(context, content_type="text/json-comment-filtered")
+        # return render(request, 'result.html', context)
 
 # def send(request):
 #     return render(request, 'send.html')
